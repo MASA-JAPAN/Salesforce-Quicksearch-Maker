@@ -2,3 +2,5 @@ force.json
 sfdx-project.json
 settings.json
 sfdx-config.json
+.forceCode
+.sfdx

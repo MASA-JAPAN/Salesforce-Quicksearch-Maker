@@ -11,17 +11,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.1/redux.js"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/@material-ui/core@latest/umd/material-ui.production.min.js"></script>
     <script src="/soap/ajax/45.0/connection.js" type="text/javascript"></script>
     <script src="/soap/ajax/45.0/apex.js" type="text/javascript"></script>
     <apex:includeScript value="//cdn.rawgit.com/mattwelch/makeDeferredProvider/master/makeDeferredProvider.min.js" />
-    <apex:stylesheet value="//cdn.rawgit.com/mailtoharshit/LightingDesignSystem/master/salesforce-lightning-design-system-v0.8.0/assets/styles/salesforce-lightning-design-system-vf.min.css"
-    />
-    <apex:stylesheet value="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <style type="text/css">
     </style>
     <apex:slds />
-    <meta name="viewport" content="width=device-width, user-scalable=no" />
   </head>
 
   <body>
@@ -32,6 +30,30 @@
 
     </script>
     <script type="text/babel">
+      const {
+        Button,
+        AppBar,
+        Toolbar,
+        TextField,
+        Table,
+        TableBody,
+        TableCell,
+        TableHead,
+        TableRow,
+        Icon,
+        DeleteIcon,
+        DialogTitle,
+        Dialog,
+        DialogActions,
+        DialogContent,
+        DialogContentText,
+        SvgIcon,
+        Fab,
+        InputBase,
+
+
+
+      } = MaterialUI;
 
       class SearchPage extends React.Component {
         constructor(props) {
@@ -39,10 +61,12 @@
           this.state = {
             contacts: [],
             updateContact: [],
-            deleteContact : []
+            deleteContact : [],
+            openContModal: false,
+            open:false,
           };
-        }
 
+        }
         
         Reset = ()=>{
           document.getElementById('InputLastName').value = "";
@@ -128,21 +152,28 @@
           //   updateContact:record,
           // }));
           this.setState({updateContact:result});
-          document.getElementById( "UpdateLastNameModal" ).value = lastName ;
-          document.getElementById( "UpdateFirstNameModal" ).value = firstName ;
-          document.getElementById( "UpdateDepartmentModal" ).value = department ;
-          document.getElementById( "UpdatePhoneModal" ).value = phone ;
+          // document.getElementById( "UpdateLastNameModal" ).value = lastName ;
+          // document.getElementById( "UpdateFirstNameModal" ).value = firstName ;
+          // document.getElementById( "UpdateDepartmentModal" ).value = department ;
+          // document.getElementById( "UpdatePhoneModal" ).value = phone ;
+          this.setState(state=>({
+            setOpen:true,
+          }));
         }
-        saveUpdateCont = () => {
+        saveUpdateCont = (id) => {
+          sforce.connection.sessionId = '{!GETSESSIONID()}';
+          var query = "Select Id, LastName, FirstName, Department, Phone from contact where Id = \'"+ id +"\'";
+          var searchResult = sforce.connection.query(query);
+          var records = searchResult.getArray("records");
           var contact = new sforce.SObject("Contact");
-          contact = this.state.updateContact;
-          contact.records.LastName = document.getElementById( "UpdateLastNameModal" ).value;
-          contact.records.FirstName = document.getElementById( "UpdateFirstNameModal" ).value;
-          contact.records.Department = document.getElementById( "UpdateDepartmentModal" ).value;
-          contact.records.Phone = document.getElementById( "UpdatePhoneModal" ).value;
-          console.log(contact);
-          var result = sforce.connection.update([contact.records]);
-          this.Search();
+          contact = records[0];
+          contact.LastName = document.getElementsByClassName(id)[0].value;
+          contact.FirstName = document.getElementsByClassName(id)[1].value;
+          contact.Department = document.getElementsByClassName(id)[2].value;
+          var result = sforce.connection.update([contact]);
+          console.log(result);
+          let saveButton = document.getElementById(id);
+          saveButton.style.backgroundColor = 'rgb(0, 255, 132)';
 
         }
         //Delete button
@@ -151,234 +182,244 @@
           var delResult = sforce.connection.deleteIds([id]);
           this.Search();
         }
+
+        handleClickOpen = () => {
+          this.setState(state=>({
+          Open:true,
+        }));
+        };
+
+        handleClose = () => {
+          setOpen(false);
+        };
+
+        handleValueChange =  (id, num, value) => {
+          
+          let changedInput = document.getElementsByClassName(id)[num];
+          changedInput.style.backgroundColor = '#ffff47';
+          let saveButton = document.getElementById(id);
+          saveButton.style.backgroundColor = 'rgb(224, 224, 224)';
+
+        }
+
         render() {
+
           return (
             <React.Fragment>
-              <nav class="navbar navbar-dark bg-primary">
-                <form class="form-inline">
-                  <div class = "slds-scope">
-                    <button class="slds-button slds-button_neutral" type="button" data-toggle="modal" data-target="#exampleModal">New Contact</button>
-                    <button class="slds-button slds-button_neutral" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="true" aria-controls="collapseExample">Collapse</button>
-                  </div>
-                </form>
-              </nav>
-              <div class="collapse" id="collapseExample">
-                <div class="slds-scope" >
-                  <div class="slds-form-element">
-                    <label class="slds-form-element__label" for="text-input-id-1">
-                      <abbr class="slds-required"> </abbr>Last Name</label>
-                    <div class="slds-form-element__control">
-                      <input type="text" id="text-input-id-1" class="slds-input" id="InputLastName"/>
-                    </div>
-                  </div>
-                  <div class="slds-form-element">
-                    <label class="slds-form-element__label" for="text-input-id-1">
-                      <abbr class="slds-required"> </abbr>First Name</label>
-                    <div class="slds-form-element__control">
-                      <input type="text" id="text-input-id-1" class="slds-input" id="InputFirstName"/>
-                    </div>
-                  </div>
-                  <div class="slds-form-element">
-                    <label class="slds-form-element__label" for="text-input-id-1">
-                      <abbr class="slds-required"> </abbr>Department</label>
-                    <div class="slds-form-element__control">
-                      <input type="text" id="text-input-id-1" class="slds-input" id="InputDepartment"/>
-                    </div>
-                  </div>
-                  <div class="slds-form-element">
-                    <label class="slds-form-element__label" for="text-input-id-1">
-                      <abbr class="slds-required"> </abbr>Phone</label>
-                    <div class="slds-form-element__control">
-                      <input type="text" id="text-input-id-1" class="slds-input" id="InputPhone"/>
-                    </div>
-                  </div>
-                  <br/>
-                  <button class="slds-button slds-button_neutral" onClick={this.Reset}>Reset</button>
-                  <button class="slds-button slds-button_brand" onClick={this.Search}>Search</button>
+              <div>
+              
+                <AppBar position = "static">
+                  <Toolbar variant="dense">
+                    Customer Search
+                  </Toolbar>
+                </AppBar>
 
 
-                  <br/>
-                </div>
               </div>
-              <br/>
+              <div>
+                <TextField
+                  id="InputLastName"
+                  label="LastName"
+                  margin="normal"
+                  variant="outlined"
+                />
+                <TextField
+                  id="InputFirstName"
+                  label="FirstName"
+                  margin="normal"
+                  variant="outlined"
+                />
+                <TextField
+                  id="InputDepartment"
+                  label="Department"
+                  margin="normal"
+                  variant="outlined"
+                />
+                <TextField
+                  id="InputPhone"
+                  label="Phone"
+                  margin="normal"
+                  variant="outlined"
+                />
+              </div>
+              <div>
+                <Button variant="contained" onClick = {this.Reset}>
+                  Reset
+                </Button>
+                <Button variant="contained" color="primary" onClick = {this.Search}>
+                  Search
+                </Button>
+              </div>
+              <div>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>
+                        Edit
+                      </TableCell>
+                      <TableCell>
+                        Last Name
+                      </TableCell>
+                      <TableCell>
+                        First Name
+                      </TableCell>
+                      <TableCell>
+                        Department
+                      </TableCell>
+                      <TableCell>
+                        Phone
+                      </TableCell>
+                      <TableCell>
+                        Id
+                      </TableCell>
+                    </TableRow>
 
-              <div className="slds-scrollable--x">
-                <table className="slds-table slds-table--bordered">
-                  <thead>
-                    <tr className="slds-text-heading--label">
-                      <th scope="col">
-                        <span className="slds-truncate">Delete</span>
-                      </th>
-                      <th scope="col">
-                        <span className="slds-truncate">Edit</span>
-                      </th>
-                      <th scope="col">
-                        <span className="slds-truncate" onClick = {this.SortAsc}>Last Name</span>
-                      </th>
-                      <th scope="col">
-                        <span className="slds-truncate">First Name</span>
-                      </th>
-                      <th scope="col">
-                        <span className="slds-truncate">Department</span>
-                      </th>
-                      <th scope="col">
-                        <span className="slds-truncate">Phone</span>
-                      </th>
-                      <th scope="col">
-                        <span className="slds-truncate">Id</span>
-                      </th>
-                    </tr>
-
-                  </thead>
-                  <tbody>
+                  </TableHead>
+                  <TableBody>
                     {this.state.contacts.map((contact)=> {
                       return(
-                        <tr data-label="contacts">
-                          <td>
-                            <button 
-                              class = "btn btn-danger"
-                              onClick={()=>this.deleteCont(contact.Id)}
+                        <TableRow data-label="contacts">
+                          <TableCell>
+                            <Fab 
+                              size="medium"
+                              onClick = {()=>this.saveUpdateCont(contact.Id)}
+                              id = {contact.Id}
                             >
-                            Delete
-                            </button>
-                          </td>
-                          <td>
-                            <button 
-                              class="btn btn-light" 
-                              type="button" 
-                              data-toggle="modal" 
-                              data-target="#updateContact" 
-                              onClick={()=>this.displayUpdateContPage(contact.Id,contact.LastName,contact.FirstName,contact.Department,contact.Phone)}
-                            >
-                            Edit Contact
-                            </button>
-                          </td>
-                          <td>{contact.LastName}</td>
-                          <td>{contact.FirstName}</td>
-                          <td>{contact.Department}</td>
-                          <td>{contact.Phone}</td>
-                          <td>{contact.Id}</td>
-                        </tr>
+                              <SvgIcon >
+                                <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" />
+                              </SvgIcon>
+                            </Fab>
+                          </TableCell>
+                          <TableCell>
+                            <input
+                              defaultValue={contact.LastName} 
+                              className = {contact.Id}
+                              name = "LastName"
+                              onChange = {(e) => this.handleValueChange(contact.Id,0,e.target.value)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <input
+                              defaultValue={contact.FirstName} 
+                              className = {contact.Id}
+                              name = "FirstName"
+                              onChange = {(e) => this.handleValueChange(contact.Id,1,e.target.value)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <input
+                              defaultValue={contact.Department}
+                              className = {contact.Id}
+                              name = "Department"
+                              onChange = {(e) => this.handleValueChange(contact.Id,2,e.target.value)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <input
+                              defaultValue={contact.Phone}
+                              className = {contact.id}
+                              name = "Phone"
+                              onChange = {(e) => this.handleValueChange(contact.Id,3,e.target.value)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <InputBase
+                              defaultValue={contact.Id}
+                            />
+                          </TableCell>
+                        </TableRow>
                       )
 
                     })}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
 
-              {/* Modal */}
-              <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                <div class="modal-dialog" role="document">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="exampleModalLabel">New Contact</h5>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                    </div>
-                    <div class="modal-body">
-                      <label class="slds-form-element__label" for="text-input-id-1">
-                        <abbr class="slds-required"> </abbr>Last Name</label>
-                      <div class="slds-form-element__control">
-                        <input type="text" id="text-input-id-1" class="slds-input" id="InputLastNameModal"/>
-                      </div>
-                      <label class="slds-form-element__label" for="text-input-id-1">
-                        <abbr class="slds-required"> </abbr>First Name</label>
-                      <div class="slds-form-element__control">
-                        <input type="text" id="text-input-id-1" class="slds-input" id="InputFirstNameModal"/>
-                      </div>
-                      <label class="slds-form-element__label" for="text-input-id-1">
-                        <abbr class="slds-required"> </abbr>Department</label>
-                      <div class="slds-form-element__control">
-                        <input type="text" id="text-input-id-1" class="slds-input" id="InputDepartmentModal"/>
-                      </div>
-                      <label class="slds-form-element__label" for="text-input-id-1">
-                        <abbr class="slds-required"> </abbr>Phone</label>
-                      <div class="slds-form-element__control">
-                        <input type="text" id="text-input-id-1" class="slds-input" id="InputPhoneModal"/>
-                      </div>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                      <button type="button" class="btn btn-primary" onClick = {this.saveCont}>Save</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* --Modal-- */}
+              
+              <Dialog open={this.state.open} onClose={this.handleClose} aria-labelledby="form-dialog-title">
+                <DialogTitle id="form-dialog-title">Subscribe</DialogTitle>
+                <DialogContent>
+                  <DialogContentText>
+                    To subscribe to this website, please enter your email address here. We will send updates
+                    occasionally.
+                  </DialogContentText>
+                  <TextField
+                    autoFocus
+                    margin="dense"
+                    id="name"
+                    label="Email Address"
+                    type="email"
+                    fullWidth
+                  />
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={this.handleClose} color="primary">
+                    Cancel
+                  </Button>
+                  <Button onClick={this.handleClose} color="primary">
+                    Subscribe
+                  </Button>
+                </DialogActions>
+              </Dialog>
 
-              {/* Modal */};
-              <div class="modal fade" id="updateContact" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                <div class="modal-dialog" role="document"  >
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="exampleModalLabel">Edit Contact</h5>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                    </div>
-                    <div class="modal-body">
-                      <label class="slds-form-element__label" for="text-input-id-1">
-                        <abbr class="slds-required"> </abbr>Last Name</label>
-                      <div class="slds-form-element__control">
-                        <input type="text" id="text-input-id-1" class="slds-input" id="UpdateLastNameModal"/>
-                      </div>
-                      <label class="slds-form-element__label" for="text-input-id-1">
-                        <abbr class="slds-required"> </abbr>First Name</label>
-                      <div class="slds-form-element__control">
-                        <input type="text" id="text-input-id-1" class="slds-input" id="UpdateFirstNameModal"/>
-                      </div>
-                      <label class="slds-form-element__label" for="text-input-id-1">
-                        <abbr class="slds-required"> </abbr>Department</label>
-                      <div class="slds-form-element__control">
-                        <input type="text" id="text-input-id-1" class="slds-input" id="UpdateDepartmentModal"/>
-                      </div>
-                      <label class="slds-form-element__label" for="text-input-id-1">
-                        <abbr class="slds-required"> </abbr>Phone</label>
-                      <div class="slds-form-element__control">
-                        <input type="text" id="text-input-id-1" class="slds-input" id="UpdatePhoneModal"/>
-                      </div>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                      <button type="button" class="btn btn-primary" onClick = {this.saveUpdateCont}>Update</button>
-                    </div>
-                  </div>
-                  
-                </div>
-                
-              </div>
-              {/* --Modal-- */}
 
             </React.Fragment>
+
           );
         }
       }
-      class EditContact extends React.Component {
-        constructor(props) {
-          super(props);
-          this.state = {
-            id: props.updateId,
-            updateContact : [],
-            deleteContact : []
-          };
-        }
+      
+function UpdateModal() {
+  const [open, setOpen] = React.useState(false);
 
-        render() {
-          sforce.connection.sessionId = '{!GETSESSIONID()}';
-          var query = "Select Id, LastName, FirstName from contact where Id = \'"+ this.props.updateId +"\'";
-          var result = sforce.connection.query(query);
-          var record = result.getArray("records");
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
 
-          return (
-            <div>
-            aaa
-            </div>
+  const handleClose = () => {
+    setOpen(false);
+  };
 
-            
-          );
-        }
-      }
+  return (
+    <div>
+      <Fab 
+        size="medium"
+        aria-label="edit"
+        onClick={handleClickOpen}
+      >
+        <SvgIcon >
+          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+        </SvgIcon>
+      </Fab>
+      <Dialog open={open} onClose={handleClose} aria-labelledby="form-dialog-title">
+        <DialogTitle id="form-dialog-title">Subscribe</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            To subscribe to this website, please enter your email address here. We will send updates
+            occasionally.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="name"
+            label="Email Address"
+            type="email"
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleClose} color="primary">
+            Subscribe
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
+  );
+}
+
 
       // ========================================
 
